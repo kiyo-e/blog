@@ -67,6 +67,15 @@ jobs:
           cat .tmp/devto-files.txt || true
         shell: bash
 
+      - name: Skip if no markdown changes
+        if: ${{ env.DEVTO_SKIP != '1' }}
+        run: |
+          if [ ! -s .tmp/devto-files.txt ]; then
+            echo "No markdown files to sync; skipping DEV.to sync."
+            echo "DEVTO_SKIP=1" >> "$GITHUB_ENV"
+          fi
+        shell: bash
+
       - name: Sync to DEV
         if: ${{ env.DEVTO_SKIP != '1' }}
         env:
