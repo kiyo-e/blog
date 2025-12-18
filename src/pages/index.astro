@@ -18,6 +18,8 @@ const posts = await getCollection("blog");
 const sortedPosts = getSortedPosts(posts);
 const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
 const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+
+const base = import.meta.env.BASE_URL;
 ---
 
 <Layout>
@@ -29,7 +31,7 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
       </h1>
       <a
         target="_blank"
-        href="/rss.xml"
+        href={`${base.replace(/\/$/, '')}/rss.xml`}
         class="inline-block"
         aria-label="rss feed"
         title="RSS Feed"
@@ -51,7 +53,7 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
         Check out the
         <LinkButton
           class="underline decoration-dashed underline-offset-4 hover:text-accent"
-          href="/posts/"
+          href={`${base}posts/`}
         >
           blog posts
         </LinkButton> below.
@@ -100,7 +102,7 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
     }
 
     <div class="my-8 text-center">
-      <LinkButton href="/posts/">
+      <LinkButton href={`${base}posts/`}>
         All Posts
         <IconArrowRight class="inline-block rtl:-rotate-180" />
       </LinkButton>
