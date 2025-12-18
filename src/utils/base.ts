@@ -4,12 +4,19 @@ const baseUrl = import.meta.env.BASE_URL;
 const basePath = baseUrl === "/" ? "" : baseUrl.replace(/\/$/, "");
 
 export function withBase(path: string) {
-  const normalized = path.startsWith("/") ? path.slice(1) : path;
-  return `${basePath}/${normalized}`;
+  if (!basePath) {
+    return path.startsWith("/") ? path : `/${path}`;
+  }
+
+  if (path === basePath || path.startsWith(`${basePath}/`)) {
+    return path;
+  }
+
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${basePath}${normalized}`;
 }
 
 export function stripBase(pathname: string) {
   if (!basePath) return pathname;
   return pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname;
 }
-
