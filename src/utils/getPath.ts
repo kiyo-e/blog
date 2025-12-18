@@ -21,16 +21,23 @@ export function getPath(
     .slice(0, -1) // remove the last segment_ file name_ since it's unnecessary
     .map(segment => slugifyStr(segment)); // slugify each segment path
 
-  const basePath = includeBase ? "/posts" : "";
+  const basePath =
+    includeBase ? `${import.meta.env.BASE_URL.replace(/\/$/, "")}/posts` : "";
 
   // Making sure `id` does not contain the directory
   const blogId = id.split("/");
-  const slug = blogId.length > 0 ? blogId.slice(-1) : blogId;
+  const slug = blogId.length > 0 ? blogId[blogId.length - 1] : id;
+
+  const slugParts = pathSegments && pathSegments.length > 0 ? [...pathSegments, slug] : [slug];
+
+  if (!includeBase) {
+    return slugParts.join("/");
+  }
 
   // If not inside the sub-dir, simply return the file path
   if (!pathSegments || pathSegments.length < 1) {
-    return [basePath, slug].join("/");
+    return `${basePath}/${slug}`;
   }
 
-  return [basePath, ...pathSegments, slug].join("/");
+  return `${basePath}/${slugParts.join("/")}`;
 }
