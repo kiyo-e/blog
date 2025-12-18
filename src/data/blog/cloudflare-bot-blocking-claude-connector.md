@@ -1,7 +1,7 @@
 ---
 title: "Why Claude's Custom Connector Failed on Cloudflare (and How I Fixed It)"
 description: "A debugging story about Cloudflare's AI Bot blocking feature breaking Claude's custom connector while ChatGPT worked fine."
-pubDatetime: 2025-06-18T12:00:00Z
+pubDatetime: 2025-12-18T13:00:00Z
 tags:
   - cloudflare
   - claude
