@@ -7,6 +7,8 @@ on:
       - "src/data/blog/**"
       - "scripts/sync-devto.mjs"
       - "package.json"
+      - "bun.lock"
+      - "bun.lockb"
       - "pnpm-lock.yaml"
   workflow_dispatch:
 
@@ -33,20 +35,15 @@ jobs:
           fi
         shell: bash
 
-      - name: Setup Node
+      - name: Setup Bun
         if: ${{ env.DEVTO_SKIP != '1' }}
-        uses: actions/setup-node@v4
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Enable Corepack
-        if: ${{ env.DEVTO_SKIP != '1' }}
-        run: corepack enable
+          bun-version: "latest"
 
       - name: Install dependencies
         if: ${{ env.DEVTO_SKIP != '1' }}
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Determine target posts
         if: ${{ env.DEVTO_SKIP != '1' }}
@@ -76,4 +73,4 @@ jobs:
           SITE_URL: https://kiyo-e.github.io/blog
           USER_AGENT: github-actions-devto-sync
           POSTS_DIR: src/data/blog
-        run: node scripts/sync-devto.mjs --files .tmp/devto-files.txt
+        run: bun scripts/sync-devto.mjs --files .tmp/devto-files.txt
