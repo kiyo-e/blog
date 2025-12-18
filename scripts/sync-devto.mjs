@@ -47,7 +47,7 @@ function canonicalUrlForFile(filePath) {
     .filter(s => !s.startsWith("_"))
     .map(s => kebabcase(s));
 
-  return `${siteUrl}/posts/${segments.join("/")}`;
+  return `${siteUrl}/posts/${segments.join("/")}/`;
 }
 
 async function listFilesRecursive(dir) {

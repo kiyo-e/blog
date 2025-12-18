@@ -13,9 +13,11 @@ on:
 permissions:
   contents: read
 
+env:
+  DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+
 jobs:
   sync:
-    if: ${{ secrets.DEVTO_API_KEY != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,19 +25,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Skip if missing DEVTO_API_KEY
+        run: |
+          if [ -z "${DEVTO_API_KEY}" ]; then
+            echo "DEVTO_API_KEY is not set; skipping DEV.to sync."
+            echo "DEVTO_SKIP=1" >> "$GITHUB_ENV"
+          fi
+        shell: bash
+
       - name: Setup Node
+        if: ${{ env.DEVTO_SKIP != '1' }}
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "pnpm"
 
       - name: Enable Corepack
+        if: ${{ env.DEVTO_SKIP != '1' }}
         run: corepack enable
 
       - name: Install dependencies
+        if: ${{ env.DEVTO_SKIP != '1' }}
         run: pnpm install --frozen-lockfile
 
       - name: Determine target posts
+        if: ${{ env.DEVTO_SKIP != '1' }}
         run: |
           mkdir -p .tmp
           BEFORE="${{ github.event.before }}"
@@ -57,8 +71,8 @@ jobs:
         shell: bash
 
       - name: Sync to DEV
+        if: ${{ env.DEVTO_SKIP != '1' }}
         env:
-          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
           SITE_URL: https://kiyo-e.github.io/blog
           USER_AGENT: github-actions-devto-sync
           POSTS_DIR: src/data/blog
