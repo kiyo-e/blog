@@ -1,0 +1,65 @@
+name: Sync to DEV.to
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/data/blog/**"
+      - "scripts/sync-devto.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    if: ${{ secrets.DEVTO_API_KEY != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine target posts
+        run: |
+          mkdir -p .tmp
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            find src/data/blog -type f \( -name '*.md' -o -name '*.mdx' \) > .tmp/devto-files.txt
+          else
+            git diff --name-only "$BEFORE" "$AFTER" -- src/data/blog \
+              | while read -r f; do
+                  if [ -f "$f" ] && [[ "$f" =~ \.(md|mdx)$ ]]; then
+                    echo "$f"
+                  fi
+                done > .tmp/devto-files.txt
+          fi
+
+          echo "Sync targets:"
+          cat .tmp/devto-files.txt || true
+        shell: bash
+
+      - name: Sync to DEV
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          SITE_URL: https://kiyo-e.github.io/blog
+          USER_AGENT: github-actions-devto-sync
+          POSTS_DIR: src/data/blog
+        run: node scripts/sync-devto.mjs --files .tmp/devto-files.txt
