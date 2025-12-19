@@ -2,7 +2,7 @@
 title: "Building a Simple MCP Server That Just Returns the Current Time"
 description: "How I built a minimal MCP server to solve the time drift problem in long ChatGPT and Claude conversations"
 pubDate: 2024-12-19
-tags: ["mcp", "cloudflare-workers", "chatgpt", "claude", "typescript"]
+tags: ["mcp", "cloudflare", "chatgpt", "claude", "typescript"]
 ---
 
 ## TL;DR
