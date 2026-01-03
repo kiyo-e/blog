@@ -1,38 +1,40 @@
 ---
-title: Building a CLI Adapter for Hono
+title: "Turn a Hono App into a Debuggable CLI (No Server, Just app.fetch)"
 pubDatetime: 2026-01-03T10:23:00+09:00
 description: A thin library that lets you call Hono apps directly from the CLI, with zero side effects and easy MCP server support.
 tags:
   - hono
-  - cli
+  - node
   - typescript
-  - mcp
+  - cli
 ---
+
+If you've ever built a CLI and hated the edit-run-repeat loop, this pattern helps:
+
+- Put all business logic in a Hono app
+- Call it from the CLI via `app.fetch()` (no HTTP server)
+- Keep the adapter pure: no stdout/stderr writes, your CLI owns the output
+
+This post shows a minimal setup, how argv maps to URL/query/body, and optional OpenAPI-powered `--help`.
 
 ## TL;DR
 
-- `hono-cli-adapter` lets you call Hono apps directly from the CLI
+- [hono-cli-adapter](https://github.com/kiyo-e/hono-cli-adapter) lets you call Hono apps directly from the CLI
 - Your logic stays in Hono—debug with Postman, ship as CLI
 - Zero stdout writes; your CLI controls all output
-- Bonus: trivial MCP server support by swapping entrypoints
+- Same Hono app works for CLI, HTTP, and MCP servers
 
 ## The Problem
 
 Debugging CLI tools is tedious. Run, tweak args, run again. No request history, no easy inspection.
 
-What if your CLI logic lived behind HTTP endpoints instead?
+What if your CLI logic lived behind HTTP endpoints instead? You'd get Postman for debugging, saved requests for regression tests, and a single source of truth for both CLI and API.
 
 ## What I Built
 
 [hono-cli-adapter](https://github.com/kiyo-e/hono-cli-adapter) — a thin library that converts CLI arguments into HTTP requests and calls your Hono app's `app.fetch()` directly.
 
 No actual HTTP server needed. Just your Hono app and a few lines of CLI glue.
-
-Why Hono?
-
-- **Dev with web tools**: Use Postman or Insomnia while building. Save requests, inspect responses, iterate fast.
-- **MCP ready**: Swap the entrypoint and you get both local and remote MCP server support. Same logic, different transports.
-- **Testable**: Your Hono app is the source of truth. Test it independently.
 
 ## Getting Started
 
@@ -42,10 +44,25 @@ Install:
 npm install hono-cli-adapter
 ```
 
-Create your CLI:
+First, your Hono app (this is the logic you want to call from CLI):
+
+```ts
+// app.ts
+import { Hono } from 'hono'
+export const app = new Hono()
+
+app.post('/hello/:name', (c) => c.text(`Hello, ${c.req.param('name')}!`))
+app.post('/create-user', async (c) => {
+  const body = await c.req.json()
+  return c.json({ ok: true, user: body })
+})
+```
+
+Then, your CLI (just 4 lines):
 
 ```ts
 #!/usr/bin/env node
+// cli.ts
 import { cli } from 'hono-cli-adapter'
 import { app } from './app.js'
 
@@ -55,18 +72,26 @@ await cli(app)
 Run it:
 
 ```bash
-# Call /hello/:name route
-node my-cli.js hello Taro
-# -> "Hello, Taro!"
+node cli.js hello Taro
+# -> Hello, Taro!
 
-# List available routes
-node my-cli.js --list
+node cli.js create-user -- name=Taro email=taro@example.com
+# -> {"ok":true,"user":{"name":"Taro","email":"taro@example.com"}}
 
-# Show help
-node my-cli.js --help
+node cli.js --list   # List available routes
+node cli.js --help   # Show help
 ```
 
-That's the basics. CLI arguments become URL paths and query params, then hit `app.fetch()`.
+That's it. The same `app.ts` works with Postman during dev, as an HTTP API in production, and now as a CLI.
+
+## How argv Maps to HTTP
+
+| CLI input | Becomes |
+|-----------|---------|
+| `hello Taro` | Path segments (`POST /hello/Taro`) |
+| `--foo=bar` | Query string (`?foo=bar`) |
+| `-- key=value` | JSON body (`{"key":"value"}`) |
+| `--env KEY=VALUE` | Env overlay (highest priority) |
 
 ## How It Works
 
@@ -90,6 +115,22 @@ process.exit(code)
 
 CLI commands trigger actions. POST makes sense. GET support can come later if needed.
 
+## MCP Server Support
+
+Here's where Hono really shines. The same app works as:
+
+```
+┌─────────────┐
+│   app.ts    │  ← Your business logic (single source of truth)
+└─────────────┘
+       │
+       ├──→ cli.ts (hono-cli-adapter) → CLI
+       ├──→ server.ts (Hono serve)    → HTTP API
+       └──→ mcp.ts (mcp-hono-adapter) → MCP Server
+```
+
+Just swap the entrypoint. No logic duplication. If you're building MCP tools, this pattern saves a ton of maintenance.
+
 ## Advanced Usage
 
 ### Environment Variables
@@ -105,16 +146,7 @@ await cli(app, process, { env: { API_URL: 'https://dev.example.com' } })
 ```
 
 ```bash
-node my-cli.js do-thing --env API_KEY=secret-123
-```
-
-### Request Body
-
-Tokens after `--` become JSON body:
-
-```bash
-node my-cli.js create-user -- name=Taro email=taro@example.com
-# Sends: { "name": "Taro", "email": "taro@example.com" }
+node cli.js do-thing --env API_KEY=secret-123
 ```
 
 ### beforeFetch Hook
@@ -158,6 +190,6 @@ No CommonJS. Node 18+ required.
 
 ## Wrapping Up
 
-Hono + CLI is a pattern that deserves more attention. You get web tooling during dev, easy MCP support, and a testable core—all without duplicating logic.
+Hono + CLI is a pattern that deserves more attention. You get web tooling during dev, trivial MCP support, and a testable core—all without duplicating logic.
 
 Check it out: [github.com/kiyo-e/hono-cli-adapter](https://github.com/kiyo-e/hono-cli-adapter)
