@@ -1,4 +1,13 @@
-# Building a CLI Adapter for Hono
+---
+title: Building a CLI Adapter for Hono
+pubDatetime: 2026-01-03T10:23:00+09:00
+description: A thin library that lets you call Hono apps directly from the CLI, with zero side effects and easy MCP server support.
+tags:
+  - hono
+  - cli
+  - typescript
+  - mcp
+---
 
 ## TL;DR
 
