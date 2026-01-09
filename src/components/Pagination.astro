@@ -11,6 +11,8 @@ export interface Props {
 }
 
 const { page } = Astro.props;
+const prevHref = page.url.prev ? withBase(page.url.prev) : "";
+const nextHref = page.url.next ? withBase(page.url.next) : "";
 ---
 
 {
@@ -18,7 +20,7 @@ const { page } = Astro.props;
     <nav class="mt-auto mb-8 flex justify-center" aria-label="Pagination">
       <LinkButton
         disabled={!page.url.prev}
-        href={withBase(page.url.prev as string)}
+        href={prevHref}
         class:list={["me-4 select-none", { "opacity-50": !page.url.prev }]}
         ariaLabel="Previous"
       >
@@ -28,7 +30,7 @@ const { page } = Astro.props;
       {page.currentPage} / {page.lastPage}
       <LinkButton
         disabled={!page.url.next}
-        href={withBase(page.url.next as string)}
+        href={nextHref}
         class:list={["ms-4 select-none", { "opacity-50": !page.url.next }]}
         ariaLabel="Next"
       >
