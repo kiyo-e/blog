@@ -7,8 +7,6 @@ tags:
   - cloudflare
   - hono
   - typescript
-featured: false
-draft: false
 ---
 
 ## TL;DR
