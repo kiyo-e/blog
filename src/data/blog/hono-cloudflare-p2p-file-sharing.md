@@ -1,6 +1,6 @@
 ---
 title: "Zero Egress Costs: How I Built P2P File Sharing with Cloudflare"
-pubDatetime: 2026-01-09T13:10:00+09:00
+pubDatetime: 2026-01-09
 description: "File sharing services charge you for every byte. I built one where files never touch the server — and egress costs stay at zero, no matter the file size."
 tags:
   - webrtc
